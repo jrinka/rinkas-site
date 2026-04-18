@@ -4,269 +4,288 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>rinkas.com</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0a0a0f;
-      --surface: #13131a;
-      --border: #1e1e2e;
-      --accent: #7c6af7;
-      --accent-glow: rgba(124, 106, 247, 0.35);
-      --text: #e8e8f0;
-      --muted: #6b6b80;
+      --bg: #111110;
+      --bg-card: #1a1917;
+      --text: #e2d9c8;
+      --text-muted: #7a7265;
+      --text-dim: #4a453e;
+      --accent: #b8895a;
+      --accent-light: #d4a97a;
+      --border: rgba(255,255,255,0.06);
     }
 
+    html { font-size: 16px; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
-    /* Nav */
-    nav {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.25rem 2.5rem;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      background: rgba(10, 10, 15, 0.85);
-      backdrop-filter: blur(12px);
-      z-index: 10;
+    header {
+      padding: 3rem 2rem 0;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+      opacity: 0;
+      animation: rise 0.9s ease forwards;
     }
 
-    .logo {
-      font-size: 1.1rem;
-      font-weight: 700;
+    .site-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
       letter-spacing: -0.02em;
+      line-height: 1;
       color: var(--text);
-      text-decoration: none;
     }
 
-    .logo span { color: var(--accent); }
+    .site-name em {
+      font-style: italic;
+      color: var(--accent-light);
+    }
 
-    nav ul {
-      list-style: none;
+    .tagline {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    nav {
+      margin-top: 1.5rem;
       display: flex;
-      gap: 2rem;
+      gap: 1.5rem;
+      opacity: 0;
+      animation: rise 0.9s ease 0.15s forwards;
     }
 
     nav a {
-      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.9rem;
+      font-weight: 400;
       transition: color 0.2s;
     }
 
-    nav a:hover { color: var(--text); }
+    nav a:hover { color: var(--accent-light); }
 
-    /* Hero */
-    .hero {
+    .divider {
+      max-width: 900px;
+      margin: 2.5rem auto 0;
+      width: 100%;
+      padding: 0 2rem;
+      opacity: 0;
+      animation: rise 0.9s ease 0.25s forwards;
+    }
+
+    .divider hr {
+      border: none;
+      border-top: 1px solid var(--border);
+    }
+
+    main {
+      max-width: 900px;
+      margin: 3rem auto 0;
+      width: 100%;
+      padding: 0 2rem;
       flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 6rem 2rem 4rem;
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+
+    .section-card {
+      background: var(--bg);
+      padding: 2.5rem 2rem;
+      text-decoration: none;
+      display: block;
       position: relative;
       overflow: hidden;
+      transition: background 0.3s;
+      opacity: 0;
     }
 
-    .hero::before {
-      content: "";
+    .section-card:nth-child(1) { animation: rise 0.9s ease 0.3s forwards; }
+    .section-card:nth-child(2) { animation: rise 0.9s ease 0.42s forwards; }
+    .section-card:nth-child(3) { animation: rise 0.9s ease 0.54s forwards; }
+
+    .section-card::before {
+      content: '';
       position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 60% 40% at 50% 30%, var(--accent-glow), transparent 70%);
-      pointer-events: none;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.35s ease;
     }
 
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--accent);
-      border: 1px solid rgba(124, 106, 247, 0.4);
-      background: rgba(124, 106, 247, 0.08);
-      padding: 0.35rem 0.85rem;
-      border-radius: 9999px;
-      margin-bottom: 2rem;
-    }
+    .section-card:hover { background: var(--bg-card); }
+    .section-card:hover::before { transform: scaleX(1); }
 
-    h1 {
-      font-size: clamp(2.5rem, 6vw, 5rem);
-      font-weight: 800;
-      letter-spacing: -0.04em;
-      line-height: 1.1;
-      max-width: 14ch;
+    .card-number {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      font-weight: 400;
+      letter-spacing: 0.05em;
       margin-bottom: 1.5rem;
     }
 
-    h1 em {
-      font-style: normal;
-      background: linear-gradient(135deg, #a78bfa, #6366f1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .sub {
-      font-size: 1.15rem;
-      color: var(--muted);
-      max-width: 44ch;
-      line-height: 1.7;
-      margin-bottom: 2.5rem;
-    }
-
-    .cta-group {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 1.75rem;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      text-decoration: none;
-      transition: all 0.2s;
-      cursor: pointer;
-      border: none;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 0 24px var(--accent-glow);
-    }
-
-    .btn-primary:hover {
-      background: #9580ff;
-      box-shadow: 0 0 36px var(--accent-glow);
-      transform: translateY(-1px);
-    }
-
-    .btn-ghost {
-      background: transparent;
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 2rem;
+      font-weight: 300;
+      line-height: 1.15;
       color: var(--text);
-      border: 1px solid var(--border);
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.01em;
     }
 
-    .btn-ghost:hover {
-      border-color: var(--muted);
-      transform: translateY(-1px);
+    .card-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      font-weight: 300;
     }
 
-    /* Cards */
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1.25rem;
-      padding: 0 2.5rem 6rem;
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%;
+    .card-arrow {
+      margin-top: 2rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 400;
+      opacity: 0;
+      transition: opacity 0.25s;
     }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.75rem;
-      transition: border-color 0.2s, transform 0.2s;
+    .section-card:hover .card-arrow { opacity: 1; }
+
+    .intro {
+      margin-bottom: 3rem;
+      opacity: 0;
+      animation: rise 0.9s ease 0.2s forwards;
     }
 
-    .card:hover {
-      border-color: rgba(124, 106, 247, 0.5);
-      transform: translateY(-3px);
+    .intro p {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text-muted);
+      line-height: 1.75;
+      max-width: 580px;
     }
 
-    .card-icon {
-      font-size: 1.75rem;
-      margin-bottom: 1rem;
-    }
-
-    .card h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .card p {
-      font-size: 0.875rem;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    /* Footer */
     footer {
-      text-align: center;
-      padding: 1.5rem;
-      border-top: 1px solid var(--border);
-      font-size: 0.8rem;
-      color: var(--muted);
+      max-width: 900px;
+      margin: 4rem auto;
+      width: 100%;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      animation: rise 0.9s ease 0.7s forwards;
+    }
+
+    footer p {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      letter-spacing: 0.05em;
+    }
+
+    footer a {
+      color: var(--text-dim);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer a:hover { color: var(--accent-light); }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .sections { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 0.5rem; text-align: center; }
     }
   </style>
 </head>
 <body>
 
+  <header>
+    <h1 class="site-name">rin<em>kas</em></h1>
+    <p class="tagline">Beijing &nbsp;·&nbsp; Teacher &nbsp;·&nbsp; Reader &nbsp;·&nbsp; Sandbox</p>
+  </header>
+
   <nav>
-    <a href="/" class="logo">rinka<span>s</span>.com</a>
-    <ul>
-      <li><a href="#">Work</a></li>
-      <li><a href="#">About</a></li>
-      <li><a href="#">Contact</a></li>
-    </ul>
+    <a href="/interests">Interests</a>
+    <a href="/teaching">Teaching</a>
+    <a href="/writing">Writing</a>
   </nav>
 
-  <section class="hero">
-    <div class="badge">✦ Testing</div>
-    <h1>Messing <em>Around.</em></h1>
-    <p class="sub">A personal corner of the internet. Work, ideas, and everything in between.</p>
-    <div class="cta-group">
-      <a href="#" class="btn btn-primary">Interests →</a>
-      <a href="#" class="btn btn-ghost">Get in touch</a>
-    </div>
-  </section>
+  <div class="divider"><hr /></div>
 
-  <div class="cards">
-    <div class="card">
-      <div class="card-icon">⚡</div>
-      <h3>Fast &amp; focused</h3>
-      <p>Shipping ideas quickly without sacrificing craft or attention to detail.</p>
+  <main>
+    <div class="intro">
+      <p>A personal site for things I'm reading, watching, listening to, and building. Works in progress, classroom tools, occasional writing.</p>
     </div>
-    <div class="card">
-      <div class="card-icon">🎨</div>
-      <h3>Design-minded</h3>
-      <p>Clean interfaces and thoughtful experiences from the ground up.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">🔧</div>
-      <h3>Full-stack</h3>
-      <p>Comfortable across the whole stack — whatever the problem needs.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon">🌐</div>
-      <h3>Open web</h3>
-      <p>Building for the open web, with modern standards and accessibility in mind.</p>
-    </div>
-  </div>
 
-  <footer>© 2026 rinkas.com</footer>
+    <div class="sections">
+      <a class="section-card" href="/interests">
+        <p class="card-number">01</p>
+        <h2 class="card-title">Interests</h2>
+        <p class="card-desc">Books, films, music, games, art. Curated lists and occasional notes on what's worth paying attention to.</p>
+        <p class="card-arrow">Explore &rarr;</p>
+      </a>
+
+      <a class="section-card" href="/teaching">
+        <p class="card-number">02</p>
+        <h2 class="card-title">Teaching</h2>
+        <p class="card-desc">Classroom tools, bellringers, timers, projectable games, and lit resources. Built for IB Literature and English 9–10.</p>
+        <p class="card-arrow">Explore &rarr;</p>
+      </a>
+
+      <a class="section-card" href="/writing">
+        <p class="card-number">03</p>
+        <h2 class="card-title">Writing</h2>
+        <p class="card-desc">Longer thoughts when a paragraph isn't enough. Mostly about books, music, and whatever I can't stop thinking about.</p>
+        <p class="card-arrow">Explore &rarr;</p>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <p>rinkas.com</p>
+    <p>Beijing, China</p>
+  </footer>
 
 </body>
 </html>
