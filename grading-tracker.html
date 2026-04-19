@@ -1,0 +1,2210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grading Time</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: {
+                            850: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617',
+                        },
+                        phase: {
+                            reading: '#06b6d4',
+                            marking: '#f59e0b',
+                            grading: '#10b981',
+                            break: '#8b5cf6',
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        
+        .paper-sheet {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 6px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.8);
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .paper-sheet::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 8px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .paper-lines {
+            background-image: repeating-linear-gradient(transparent, transparent 18px, #cbd5e1 18px, #cbd5e1 19px);
+            background-position: 0 30px;
+        }
+        
+        .stack-item { position: absolute; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .btn-satisfying { transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-satisfying:active { transform: scale(0.96); }
+        
+        .timer-reading { color: #06b6d4; }
+        .timer-marking { color: #f59e0b; }
+        .timer-grading { color: #10b981; }
+        
+        /* Phase animations */
+        .eyes-container { 
+            position: relative; 
+            width: 80px; 
+            height: 40px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .eye {
+            width: 32px; 
+            height: 32px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .pupil {
+            width: 14px; 
+            height: 14px;
+            background: #06b6d4;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -7px;
+            margin-left: -7px;
+            animation: eyesMove 1.5s ease-in-out infinite;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .pencil-container {
+            width: 60px; 
+            height: 60px;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 10px;
+        }
+        .pencil {
+            width: 10px; 
+            height: 45px;
+            background: linear-gradient(to right, #f59e0b 0%, #fbbf24 30%, #f59e0b 50%, #d97706 100%);
+            border-radius: 0 0 2px 2px;
+            position: relative;
+            animation: pencilWrite 0.8s ease-in-out infinite;
+            transform-origin: top center;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        }
+        .pencil::before {
+            content: '';
+            position: absolute;
+            bottom: -10px; 
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 10px solid #fbbf24;
+        }
+        .pencil::after {
+            content: '';
+            position: absolute;
+            bottom: -12px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px; 
+            height: 3px;
+            background: #1f2937;
+            border-radius: 50%;
+        }
+        .writing-lines {
+            position: absolute;
+            bottom: 5px;
+            left: -10px;
+            right: -10px;
+            height: 25px;
+            background-image: repeating-linear-gradient(
+                transparent,
+                transparent 6px,
+                rgba(245, 158, 11, 0.3) 6px,
+                rgba(245, 158, 11, 0.3) 7px
+            );
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .checkbox-item {
+            width: 28px; height: 28px;
+            border: 2px solid #10b981;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.3;
+            transition: all 0.2s ease;
+        }
+        .checkbox-item.checked {
+            background: #10b981;
+            opacity: 1;
+            animation: checkPop 0.3s ease-out;
+        }
+        .checkbox-item.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        @keyframes checkPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Completion celebration */
+        .celebration-container {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .celebration-text {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #10b981;
+            text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+            animation: celebrateText 1s ease-out forwards;
+            opacity: 0;
+        }
+        
+        @keyframes celebrateText {
+            0% { transform: scale(0) rotate(-10deg); opacity: 0; }
+            20% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+            40% { transform: scale(1.1) rotate(-3deg); }
+            60% { transform: scale(1.2) rotate(2deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); opacity: 0; }
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            animation: confettiFall 1.5s ease-out forwards;
+        }
+        
+        @keyframes confettiFall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        .strike-box {
+            width: 20px; height: 20px;
+            border-radius: 4px;
+            border: 2px solid #ef4444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .strike-box.used {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .paused-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        
+        /* Light Mode Styles - High Contrast */
+        body.light {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+        
+        body.light .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        body.light .bg-slate-800,
+        body.light .bg-slate-900,
+        body.light .bg-slate-950 {
+            background-color: #f1f5f9 !important;
+        }
+        
+        body.light .text-slate-300 {
+            color: #374151 !important;
+        }
+        
+        body.light .text-slate-400 {
+            color: #1f2937 !important;
+            font-weight: 500;
+        }
+        
+        body.light .text-slate-500 {
+            color: #111827 !important;
+            font-weight: 500;
+        }
+        
+        body.light .text-white {
+            color: #000000 !important;
+        }
+        
+        body.light input,
+        body.light select {
+            background-color: #ffffff !important;
+            border-color: #6b7280 !important;
+            color: #000000 !important;
+            font-weight: 500;
+        }
+        
+        body.light .bg-slate-700,
+        body.light .bg-slate-850 {
+            background-color: #e5e7eb !important;
+        }
+        
+        body.light .border-slate-600,
+        body.light .border-slate-700 {
+            border-color: #9ca3af !important;
+        }
+        
+        body.light .bg-slate-800\/50 {
+            background-color: rgba(243, 244, 246, 0.9) !important;
+        }
+        
+        /* Paper stack text colors in light mode */
+        body.light .paper-sheet .text-slate-700 {
+            color: #000000 !important;
+        }
+        
+        body.light .paper-sheet .text-slate-400 {
+            color: #374151 !important;
+        }
+        
+        body.light .text-emerald-200 {
+            color: #065f46 !important;
+        }
+        
+        body.light .text-emerald-300\/70,
+        body.light .text-emerald-300\/50 {
+            color: #047857 !important;
+        }
+        
+        body.light .text-emerald-400 {
+            color: #059669 !important;
+        }
+        
+        body.light .text-emerald-500\/70 {
+            color: #10b981 !important;
+        }
+        
+        body.light .border-emerald-500\/30 {
+            border-color: #10b981 !important;
+        }
+        
+        body.light .bg-emerald-50\/10 {
+            background-color: rgba(209, 250, 229, 0.5) !important;
+        }
+        
+        /* Keyframes */
+        @keyframes eyesMove {
+            0%, 100% { transform: translateX(-6px); }
+            50% { transform: translateX(6px); }
+        }
+        
+        @keyframes pencilWrite {
+            0%, 100% { transform: translateX(-8px) rotate(-12deg); }
+            25% { transform: translateX(8px) rotate(8deg); }
+            50% { transform: translateX(-4px) rotate(-6deg); }
+            75% { transform: translateX(12px) rotate(10deg); }
+        }
+        
+        @keyframes checkBounce {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body id="appBody" class="bg-slate-950 text-white min-h-screen overflow-hidden dark">
+    <!-- Phase Progress Bar -->
+    <div class="fixed top-0 left-0 right-0 h-2 bg-slate-800 z-50 flex">
+        <div id="segReading" class="progress-segment h-full bg-phase-reading flex-1 opacity-20" data-phase="reading"></div>
+        <div id="segMarking" class="progress-segment h-full bg-phase-marking flex-1 opacity-20" data-phase="marking"></div>
+        <div id="segGrading" class="progress-segment h-full bg-phase-grading flex-1 opacity-20" data-phase="grading"></div>
+    </div>
+
+    <!-- Paper Type Selector Modal -->
+    <div id="paperTypeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="bg-slate-900 rounded-2xl p-8 max-w-md mx-4 w-full border border-slate-700 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-electric-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-electric-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-semibold mb-2">Select Paper Type</h2>
+                <p class="text-slate-400 text-sm">Choose the grading rubric for this session</p>
+            </div>
+            
+            <div class="space-y-3">
+                <button onclick="app.selectPaperType(1)" class="btn-satisfying w-full p-4 bg-slate-800 hover:bg-slate-700 border-2 border-transparent hover:border-phase-reading rounded-xl text-left transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-semibold text-white mb-1">Paper 1</div>
+                            <div class="text-sm text-slate-400">Criteria A, B, C, D (1-5 each)</div>
+                        </div>
+                        <div class="text-2xl font-bold text-phase-reading">20</div>
+                    </div>
+                </button>
+                
+                <button onclick="app.selectPaperType(2)" class="btn-satisfying w-full p-4 bg-slate-800 hover:bg-slate-700 border-2 border-transparent hover:border-phase-marking rounded-xl text-left transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-semibold text-white mb-1">Paper 2</div>
+                            <div class="text-sm text-slate-400">Criteria A, B1, B2, C, D (1-5 each)</div>
+                        </div>
+                        <div class="text-2xl font-bold text-phase-marking">25</div>
+                    </div>
+                </button>
+                
+                <button onclick="app.selectPaperType(3)" class="btn-satisfying w-full p-4 bg-slate-800 hover:bg-slate-700 border-2 border-transparent hover:border-phase-grading rounded-xl text-left transition-all">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="font-semibold text-white mb-1">E10 CRA</div>
+                            <div class="text-sm text-slate-400">RI 10.1, RI 10.4, W 10.2, L.10.1 (BE/AP/ME/MA)</div>
+                        </div>
+                        <div class="text-lg font-bold text-phase-grading">Letter</div>
+                    </div>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-500 text-center mt-4">This setting will apply until you export and clear data</p>
+        </div>
+    </div>
+
+    <!-- Grading Modal -->
+    <div id="gradingModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div id="gradingModalContent" class="bg-slate-900 rounded-2xl p-8 max-w-md mx-4 w-full border border-slate-700 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-phase-grading/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-phase-grading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-semibold mb-1">Final Grade</h2>
+                <p class="text-slate-400 text-sm" id="gradingEssayName">Essay Name</p>
+            </div>
+            
+            <div class="space-y-6 mb-6">
+                <div id="criteriaGrid" class="grid gap-3">
+                    <!-- Criteria inserted dynamically based on paper type -->
+                </div>
+                
+                <!-- Auto-calculated Total -->
+                <div class="bg-slate-800 rounded-xl p-4 text-center border border-slate-700">
+                    <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Total Score</div>
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="gradeTotal" class="text-4xl font-bold text-slate-500">-</span>
+                        <span class="text-slate-500 text-lg">/ <span id="gradeMax">20</span></span>
+                    </div>
+                </div>
+                
+                <!-- Comment Box -->
+                <div>
+                    <label class="text-xs text-slate-400 uppercase tracking-wider mb-2 block">Comments</label>
+                    <textarea id="essayComment" rows="3" placeholder="Add any comments about this essay..." 
+                        class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-phase-grading focus:ring-2 focus:ring-phase-grading/20 resize-none"></textarea>
+                </div>
+            </div>
+            
+            <button onclick="app.submitGrade()" class="btn-satisfying w-full px-6 py-3 bg-phase-grading hover:opacity-90 rounded-xl font-medium text-white transition-colors">
+                Complete & Next Essay
+            </button>
+        </div>
+    </div>
+
+    <!-- Break Modal -->
+    <div id="breakModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center">
+        <div class="glass-panel rounded-2xl p-8 max-w-md mx-4 text-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-phase-break/10"></div>
+            <div class="relative z-10">
+                <div class="text-5xl mb-4">🧘</div>
+                <h2 class="text-2xl font-semibold mb-2 text-phase-break">Reset Break</h2>
+                <p class="text-slate-400 mb-6">2 minutes to clear your mind before the next essay.</p>
+                <div id="breakTimer" class="text-5xl font-mono font-light mb-6 text-phase-break">02:00</div>
+                <button onclick="app.skipBreak()" class="btn-satisfying px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition-colors">
+                    Skip Break
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 h-screen flex flex-col">
+        <!-- Header -->
+        <header class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-phase-reading to-phase-grading rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-semibold tracking-tight">Grading Time</h1>
+                    <p class="text-xs text-slate-500">Build queue → Start → 3m → 7m → 5m → Grade → 2m break</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button id="themeToggle" onclick="app.toggleTheme()" class="btn-satisfying p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors" title="Toggle dark/light mode">
+                    <svg id="darkIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                    </svg>
+                    <svg id="lightIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                </button>
+                <button id="soundToggle" onclick="app.toggleSound()" class="btn-satisfying p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition-colors">
+                    <svg id="soundOn" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    </svg>
+                    <svg id="soundOff" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+                    </svg>
+                </button>
+                <button onclick="app.exportCSV()" class="btn-satisfying px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Export
+                </button>
+                <button onclick="app.clearAll()" class="btn-satisfying p-2 rounded-lg bg-slate-800 hover:bg-red-900/30 text-slate-400 hover:text-red-400 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Session Stats -->
+        <div class="grid grid-cols-4 gap-3 mb-6">
+            <div class="glass-panel rounded-xl p-3 border-l-4 border-phase-reading">
+                <div class="text-slate-400 text-xs uppercase tracking-wider mb-1">Completed</div>
+                <div class="text-2xl font-semibold"><span id="sessionCount">0</span> <span class="text-sm text-slate-500 font-normal">essays</span></div>
+            </div>
+            <div class="glass-panel rounded-xl p-3 border-l-4 border-phase-marking">
+                <div class="text-slate-400 text-xs uppercase tracking-wider mb-1">In Queue</div>
+                <div class="text-2xl font-semibold"><span id="queueCountDisplay">0</span> <span class="text-sm text-slate-500 font-normal">essays</span></div>
+            </div>
+            <div class="glass-panel rounded-xl p-3 border-l-4 border-phase-grading">
+                <div class="text-slate-400 text-xs uppercase tracking-wider mb-1">Avg Time</div>
+                <div class="text-2xl font-semibold"><span id="avgTime">--</span> <span class="text-sm text-slate-500 font-normal">min</span></div>
+            </div>
+            <div class="glass-panel rounded-xl p-3 border-l-4 border-phase-break">
+                <div class="text-slate-400 text-xs uppercase tracking-wider mb-1">Breaks</div>
+                <div class="text-2xl font-semibold"><span id="breakCount">0</span> <span class="text-sm text-slate-500 font-normal">taken</span></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 grid grid-cols-12 gap-6 min-h-0">
+            <!-- Left: Paper Stack Queue -->
+            <div class="col-span-4 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-medium text-slate-400 uppercase tracking-wider">Essay Stack</h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="app.toggleQueueView()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                            <span id="queueToggleText">List view</span>
+                        </button>
+                        <span id="queueBadge" class="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded-full">0</span>
+                    </div>
+                </div>
+                
+                <div id="queueContainer" class="flex-1 glass-panel rounded-2xl p-6 relative overflow-hidden">
+                    <div id="queueEmpty" class="absolute inset-0 flex items-center justify-center text-center p-4">
+                        <div>
+                            <div class="text-4xl mb-3 opacity-30">📄</div>
+                            <p class="text-slate-500 text-sm">Stack is empty</p>
+                            <p class="text-slate-600 text-xs mt-1">Add essays below</p>
+                        </div>
+                    </div>
+                    <!-- Stack View -->
+                    <div id="paperStack" class="relative h-full flex items-center justify-center" style="perspective: 1000px;">
+                        <!-- Papers rendered here -->
+                    </div>
+                    <!-- List View (scrollable) -->
+                    <div id="queueList" class="absolute inset-0 overflow-y-auto p-4 hidden">
+                        <!-- List items rendered here -->
+                    </div>
+                </div>
+                
+                <!-- Add Input -->
+                <div class="mt-4 space-y-2">
+                    <div class="flex gap-2">
+                        <input type="text" id="essayInput" placeholder="Student name or Essay ID..." 
+                            class="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-phase-reading focus:border-transparent transition-all text-sm"
+                            onkeypress="if(event.key==='Enter') app.addEssay()">
+                        <button onclick="app.addEssay()" class="btn-satisfying px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-medium transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <button onclick="app.startWithOne()" id="justOneBtn" class="btn-satisfying w-full px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors">
+                        + Quick add sample essay
+                    </button>
+                </div>
+            </div>
+
+            <!-- Center: Active Timer & Phase Control -->
+            <div class="col-span-4 flex flex-col">
+                <!-- Start Button (when queue ready) -->
+                <div id="startSection" class="mb-4 hidden">
+                    <div class="bg-slate-800/50 rounded-lg px-3 py-2 mb-3 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-slate-400">Current Rubric:</span>
+                            <span id="currentPaperType" class="text-xs font-medium text-phase-reading ml-1">Paper 1 (Max 20)</span>
+                        </div>
+                        <button onclick="app.showPaperTypeSelector()" class="text-xs text-slate-400 hover:text-white underline">Change</button>
+                    </div>
+                    <button onclick="app.startGrading()" class="btn-satisfying w-full px-6 py-4 bg-gradient-to-r from-phase-reading to-phase-marking hover:opacity-90 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-3 shadow-lg shadow-phase-reading/20">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Start Grading Session
+                        <span id="startQueueCount" class="text-sm opacity-80">(3 essays)</span>
+                    </button>
+                </div>
+
+                <!-- Active Phase Display -->
+                <div id="activeSection" class="flex-1 glass-panel rounded-2xl p-6 flex flex-col relative overflow-hidden hidden">
+                    <!-- Phase Badge & Strikes -->
+                    <div class="flex items-center justify-between mb-4">
+                        <div id="phaseBadge" class="px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-phase-reading/20 text-phase-reading border border-phase-reading/30">
+                            Reading Time
+                        </div>
+                        <div class="flex items-center gap-2" title="Time extensions remaining (max 3 per essay)">
+                            <span class="text-xs text-slate-500">Extends:</span>
+                            <div class="flex gap-1" id="strikeBoxes">
+                                <div class="strike-box"></div>
+                                <div class="strike-box"></div>
+                                <div class="strike-box"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Current Essay -->
+                    <div class="mb-4">
+                        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Now Grading</div>
+                        <div id="currentEssayName" class="text-lg font-medium text-white truncate">Essay Name</div>
+                    </div>
+                    
+                    <!-- Phase Animation -->
+                    <div class="flex-1 flex flex-col items-center justify-center">
+                        <div id="phaseAnimation" class="mb-4">
+                            <!-- Eyes for reading -->
+                            <div id="animReading" class="eyes-container hidden">
+                                <div class="eye"><div class="pupil"></div></div>
+                                <div class="eye"><div class="pupil" style="animation-delay: 0.05s"></div></div>
+                            </div>
+                            <!-- Pencil for marking -->
+                            <div id="animMarking" class="pencil-container hidden">
+                                <div class="writing-lines"></div>
+                                <div class="pencil"></div>
+                            </div>
+                            <!-- Checkboxes for grading -->
+                            <div id="animGrading" class="checkbox-grid hidden">
+                                <div class="checkbox-item"></div>
+                                <div class="checkbox-item"></div>
+                                <div class="checkbox-item"></div>
+                                <div class="checkbox-item"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Timer -->
+                        <div id="timer" class="text-6xl font-mono font-light tracking-tighter timer-reading mb-2">03:00</div>
+                        
+                        <!-- Phase Progress -->
+                        <div class="w-full max-w-xs">
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>Time Remaining</span>
+                                <span id="phaseProgressText">100%</span>
+                            </div>
+                            <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+                                <div id="phaseProgressBar" class="h-full bg-phase-reading transition-all duration-1000" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pause Overlay -->
+                    <div id="pauseOverlay" class="paused-overlay hidden rounded-2xl" onclick="app.togglePause()" style="cursor: pointer;">
+                        <div class="text-center">
+                            <div class="text-4xl mb-2">⏸️</div>
+                            <div class="text-xl font-medium">Paused</div>
+                            <div class="text-sm text-slate-400 mt-2">Click to resume</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Controls -->
+                    <div class="mt-4 space-y-2">
+                        <div class="flex gap-2">
+                            <button onclick="app.togglePause()" id="pauseBtn" class="btn-satisfying flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-medium transition-colors text-sm flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Pause
+                            </button>
+                            <button onclick="app.extendTime()" id="extendBtn" class="btn-satisfying flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-medium transition-colors text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                +1 Min
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="app.prevPhase()" id="prevPhaseBtn" class="btn-satisfying flex-1 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-medium text-slate-400 transition-colors text-sm disabled:opacity-50">
+                                ← Back
+                            </button>
+                            <button onclick="app.nextPhase()" id="nextPhaseBtn" class="btn-satisfying flex-1 px-4 py-2 bg-phase-reading hover:opacity-90 rounded-lg font-medium text-white transition-colors text-sm">
+                                Next →
+                            </button>
+                        </div>
+                        <button onclick="app.skipEssay()" class="btn-satisfying w-full px-4 py-2 text-slate-500 hover:text-slate-300 transition-colors text-xs">
+                            Return to Queue
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Break Display -->
+                <div id="breakSection" class="flex-1 glass-panel rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden hidden">
+                    <div class="absolute inset-0 bg-phase-break/5"></div>
+                    <div class="relative z-10 text-center">
+                        <div class="text-6xl mb-4">🧘</div>
+                        <div class="text-sm font-medium text-phase-break uppercase tracking-wider mb-2">Reset Break</div>
+                        <div id="breakTimerDisplay" class="text-5xl font-mono font-light text-phase-break mb-4">02:00</div>
+                        <p class="text-slate-400 text-sm">Clear your mind</p>
+                    </div>
+                </div>
+
+                <!-- Idle / Setup State -->
+                <div id="idleSection" class="flex-1 glass-panel rounded-2xl p-6 flex flex-col items-center justify-center">
+                    <div class="text-5xl mb-4 opacity-30">📚</div>
+                    <h3 class="text-lg font-medium text-slate-300 mb-2">Build your queue</h3>
+                    <p class="text-slate-500 text-center text-sm">Add essay names to the stack, then start when ready.</p>
+                </div>
+            </div>
+
+            <!-- Right: Completed Stack -->
+            <div class="col-span-4 flex flex-col">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-medium text-slate-400 uppercase tracking-wider">Graded Stack</h2>
+                    <div class="flex items-center gap-2">
+                        <span id="doneStats" class="text-xs text-slate-500">Avg: --</span>
+                        <span id="doneBadge" class="text-xs bg-phase-grading/20 text-phase-grading px-2 py-1 rounded-full">0</span>
+                    </div>
+                </div>
+                
+                <div id="doneContainer" class="flex-1 glass-panel rounded-2xl p-6 relative overflow-hidden">
+                    <div id="doneEmpty" class="absolute inset-0 flex items-center justify-center text-center p-4">
+                        <div>
+                            <div class="text-4xl mb-3 opacity-30">✓</div>
+                            <p class="text-slate-500 text-sm">No essays graded</p>
+                        </div>
+                    </div>
+                    <div id="doneStack" class="relative h-full flex items-center justify-center" style="perspective: 1000px;">
+                        <!-- Completed papers rendered here -->
+                    </div>
+                    <div id="doneList" class="absolute inset-0 overflow-y-auto p-4 hidden">
+                        <!-- List items rendered here -->
+                    </div>
+                </div>
+                
+                <button onclick="app.toggleDoneView()" class="mt-2 text-xs text-slate-500 hover:text-slate-300 transition-colors text-center py-2">
+                    <span id="doneToggleText">View all completed</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Phase Legend -->
+        <div class="mt-4 flex items-center justify-center gap-6 text-xs">
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-phase-reading"></div>
+                <span class="text-slate-400">Read (3m)</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-phase-marking"></div>
+                <span class="text-slate-400">Mark (7m)</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-phase-grading"></div>
+                <span class="text-slate-400">Grade (5m)</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full bg-phase-break"></div>
+                <span class="text-slate-400">Break (2m)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class SoundManager {
+            constructor() {
+                this.enabled = localStorage.getItem('soundEnabled') !== 'false';
+                this.audioContext = null;
+            }
+            init() {
+                if (!this.audioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            toggle() {
+                this.enabled = !this.enabled;
+                localStorage.setItem('soundEnabled', this.enabled);
+                return this.enabled;
+            }
+            playPhaseChange() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(440, this.audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, this.audioContext.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+                osc.start();
+                osc.stop(this.audioContext.currentTime + 0.2);
+            }
+            playComplete() {
+                if (!this.enabled) return;
+                this.init();
+                [523.25, 659.25, 783.99].forEach((freq, i) => {
+                    const osc = this.audioContext.createOscillator();
+                    const gain = this.audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.audioContext.destination);
+                    osc.frequency.setValueAtTime(freq, this.audioContext.currentTime + i * 0.05);
+                    gain.gain.setValueAtTime(0.08, this.audioContext.currentTime + i * 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.5);
+                    osc.start(this.audioContext.currentTime + i * 0.05);
+                    osc.stop(this.audioContext.currentTime + 0.5);
+                });
+            }
+            playClick() {
+                if (!this.enabled) return;
+                this.init();
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+                osc.frequency.setValueAtTime(600, this.audioContext.currentTime);
+                gain.gain.setValueAtTime(0.05, this.audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.05);
+                osc.start();
+                osc.stop(this.audioContext.currentTime + 0.05);
+            }
+        }
+
+        class GradingWorkflow {
+            constructor() {
+                this.PHASES = {
+                    READING: { name: 'reading', label: 'Reading Time', duration: 3 * 60, color: '#06b6d4' },
+                    MARKING: { name: 'marking', label: 'Marking for Feedback', duration: 7 * 60, color: '#f59e0b' },
+                    GRADING: { name: 'grading', label: 'Grade and Comment', duration: 5 * 60, color: '#10b981' }
+                };
+                this.BREAK_DURATION = 2 * 60;
+                this.PHASE_ORDER = ['READING', 'MARKING', 'GRADING'];
+                this.MAX_STRIKES = 3;
+                this.EXTENSION_MINUTES = 60; // seconds
+                
+                this.queue = [];
+                this.completed = [];
+                this.currentEssay = null;
+                this.currentPhase = null;
+                this.timeRemaining = 0;
+                this.timerInterval = null;
+                this.isPaused = false;
+                this.strikesUsed = 0;
+                this.isBreak = false;
+                this.breakCount = 0;
+                this.isGrading = false;
+                this.soundManager = new SoundManager();
+                this.showingDoneList = false;
+                this.showingQueueList = false;
+                this.darkMode = localStorage.getItem('darkMode') !== 'false';
+                this.gradingAnimationInterval = null;
+                this.paperType = parseInt(localStorage.getItem('paperType')) || 1;
+                
+                this.loadFromStorage();
+                this.init();
+            }
+            
+            init() {
+                this.updateUI();
+                this.updateSoundIcon();
+                this.updateThemeIcon();
+                this.applyTheme();
+                window.addEventListener('beforeunload', () => this.saveToStorage());
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) this.saveToStorage();
+                });
+            }
+            
+            toggleTheme() {
+                this.darkMode = !this.darkMode;
+                localStorage.setItem('darkMode', this.darkMode);
+                this.applyTheme();
+                this.updateThemeIcon();
+            }
+            
+            applyTheme() {
+                const body = document.getElementById('appBody');
+                if (this.darkMode) {
+                    body.classList.add('dark');
+                    body.classList.remove('light');
+                } else {
+                    body.classList.add('light');
+                    body.classList.remove('dark');
+                    body.style.backgroundColor = '#f8fafc';
+                    body.style.color = '#0f172a';
+                }
+                
+                if (this.darkMode) {
+                    body.style.backgroundColor = '';
+                    body.style.color = '';
+                }
+            }
+            
+            updateThemeIcon() {
+                const darkIcon = document.getElementById('darkIcon');
+                const lightIcon = document.getElementById('lightIcon');
+                if (this.darkMode) {
+                    darkIcon.classList.remove('hidden');
+                    lightIcon.classList.add('hidden');
+                } else {
+                    darkIcon.classList.add('hidden');
+                    lightIcon.classList.remove('hidden');
+                }
+            }
+            
+            loadFromStorage() {
+                try {
+                    const data = localStorage.getItem('gradingWorkflowData');
+                    if (data) {
+                        const parsed = JSON.parse(data);
+                        this.queue = parsed.queue || [];
+                        this.completed = parsed.completed || [];
+                        this.breakCount = parsed.breakCount || 0;
+                    }
+                } catch (e) {
+                    console.error('Failed to load:', e);
+                }
+            }
+            
+            saveToStorage() {
+                try {
+                    localStorage.setItem('gradingWorkflowData', JSON.stringify({
+                        queue: this.queue,
+                        completed: this.completed,
+                        breakCount: this.breakCount,
+                        lastSaved: new Date().toISOString()
+                    }));
+                } catch (e) {
+                    console.error('Failed to save:', e);
+                }
+            }
+            
+            addEssay(name = null) {
+                const input = document.getElementById('essayInput');
+                const essayName = name || input.value.trim();
+                
+                if (!essayName) {
+                    input.focus();
+                    return;
+                }
+                
+                const essay = {
+                    id: Date.now() + Math.random(),
+                    name: essayName,
+                    addedAt: new Date().toISOString()
+                };
+                
+                this.queue.push(essay);
+                
+                if (!name) {
+                    input.value = '';
+                    input.focus();
+                }
+                
+                this.saveToStorage();
+                this.updateUI();
+                this.soundManager.playClick();
+            }
+            
+            startWithOne() {
+                const placeholders = ['Essay #1', 'Draft Review', 'Final Paper', 'Assignment', 'Student Work'];
+                this.addEssay(placeholders[Math.floor(Math.random() * placeholders.length)]);
+            }
+            
+            startGrading() {
+                if (this.queue.length === 0) return;
+                
+                // Show paper type selector if this is a fresh session (no completed essays yet)
+                // or if paper type hasn't been explicitly set this session
+                if (this.completed.length === 0) {
+                    this.showPaperTypeSelector();
+                    return;
+                }
+                
+                this.isGrading = true;
+                this.startNextEssay();
+            }
+            
+            showPaperTypeSelector() {
+                document.getElementById('paperTypeModal').classList.remove('hidden');
+            }
+            
+            selectPaperType(type) {
+                this.paperType = type;
+                localStorage.setItem('paperType', type);
+                document.getElementById('paperTypeModal').classList.add('hidden');
+                
+                // If we're already in a session, continue. Otherwise start fresh.
+                if (!this.isGrading && this.currentEssay === null) {
+                    this.isGrading = true;
+                    this.startNextEssay();
+                } else {
+                    // Just update the UI to reflect the new paper type
+                    this.updateUI();
+                }
+            }
+            
+            startNextEssay() {
+                if (this.queue.length === 0) {
+                    this.finishGradingSession();
+                    return;
+                }
+                
+                this.currentEssay = this.queue.shift();
+                this.currentEssay.startedAt = new Date().toISOString();
+                this.currentEssay.phases = [];
+                this.currentEssay.strikesUsed = 0;
+                this.strikesUsed = 0;
+                this.isPaused = false;
+                
+                this.setPhase('READING');
+                this.saveToStorage();
+                this.updateUI();
+                this.soundManager.playPhaseChange();
+            }
+            
+            finishGradingSession() {
+                this.isGrading = false;
+                this.currentEssay = null;
+                this.currentPhase = null;
+                this.stopTimer();
+                this.updateUI();
+            }
+            
+            setPhase(phaseKey) {
+                this.currentPhase = phaseKey;
+                this.timeRemaining = this.PHASES[phaseKey].duration;
+                this.startTimer();
+                this.updatePhaseUI();
+                this.updatePhaseAnimation();
+            }
+            
+            startTimer() {
+                this.stopTimer();
+                this.timerInterval = setInterval(() => {
+                    if (!this.isPaused) {
+                        this.timeRemaining--;
+                        this.updateTimerDisplay();
+                        
+                        if (this.timeRemaining <= 0) {
+                            this.onPhaseComplete();
+                        }
+                    }
+                }, 1000);
+            }
+            
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+            }
+            
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                this.updatePauseUI();
+                this.soundManager.playClick();
+            }
+            
+            extendTime() {
+                if (this.strikesUsed >= this.MAX_STRIKES) return;
+                
+                this.strikesUsed++;
+                if (this.currentEssay) {
+                    this.currentEssay.strikesUsed = this.strikesUsed;
+                }
+                this.timeRemaining += this.EXTENSION_MINUTES;
+                this.updateStrikesUI();
+                this.updateTimerDisplay();
+                this.soundManager.playClick();
+            }
+            
+            updateStrikesUI() {
+                const boxes = document.querySelectorAll('.strike-box');
+                boxes.forEach((box, i) => {
+                    if (i < this.strikesUsed) {
+                        box.classList.add('used');
+                        box.textContent = '✕';
+                    } else {
+                        box.classList.remove('used');
+                        box.textContent = '';
+                    }
+                });
+                
+                document.getElementById('extendBtn').disabled = this.strikesUsed >= this.MAX_STRIKES;
+            }
+            
+            onPhaseComplete() {
+                this.soundManager.playPhaseChange();
+                this.nextPhase();
+            }
+            
+            nextPhase() {
+                const currentIdx = this.PHASE_ORDER.indexOf(this.currentPhase);
+                
+                if (this.currentEssay) {
+                    this.currentEssay.phases.push({
+                        phase: this.currentPhase,
+                        timeSpent: this.PHASES[this.currentPhase].duration - this.timeRemaining + 
+                                   (this.strikesUsed * this.EXTENSION_MINUTES)
+                    });
+                }
+                
+                if (currentIdx < this.PHASE_ORDER.length - 1) {
+                    this.setPhase(this.PHASE_ORDER[currentIdx + 1]);
+                    // Strikes persist across phases for the same essay
+                    this.isPaused = false;
+                    this.updateStrikesUI();
+                    this.soundManager.playPhaseChange();
+                } else {
+                    this.showGradingModal();
+                }
+                
+                this.updateUI();
+            }
+            
+            prevPhase() {
+                const currentIdx = this.PHASE_ORDER.indexOf(this.currentPhase);
+                if (currentIdx > 0) {
+                    this.setPhase(this.PHASE_ORDER[currentIdx - 1]);
+                    // Strikes persist across phases
+                    this.isPaused = false;
+                    this.updateStrikesUI();
+                    this.soundManager.playClick();
+                    this.updateUI();
+                }
+            }
+            
+            showGradingModal() {
+                // Stop the timer and animations when showing grading modal
+                this.stopTimer();
+                this.stopGradingAnimation();
+                
+                document.getElementById('gradingEssayName').textContent = this.currentEssay.name;
+                this.renderCriteriaGrid();
+                document.getElementById('essayComment').value = '';
+                document.getElementById('gradingModal').classList.remove('hidden');
+                
+                // Update max score display
+                const maxEl = document.getElementById('gradeMax');
+                if (maxEl) {
+                    if (this.paperType === 3) {
+                        maxEl.textContent = 'Letter';
+                    } else {
+                        maxEl.textContent = this.paperType === 1 ? '20' : '25';
+                    }
+                }
+                
+                this.updateGradeTotal();
+            }
+            
+            renderCriteriaGrid() {
+                const grid = document.getElementById('criteriaGrid');
+                
+                if (this.paperType === 3) {
+                    // E10 CRA: Four letter-grade criteria
+                    grid.className = 'grid grid-cols-2 gap-3';
+                    
+                    const criteria = [
+                        { id: 'critRI101', label: 'RI 10.1' },
+                        { id: 'critRI104', label: 'RI 10.4' },
+                        { id: 'critW102', label: 'W 10.2' },
+                        { id: 'critL101', label: 'L.10.1' }
+                    ];
+                    
+                    grid.innerHTML = criteria.map(c => `
+                        <div class="relative">
+                            <label class="text-xs text-slate-400 uppercase tracking-wider mb-2 block text-center">${c.label}</label>
+                            <select id="${c.id}" onchange="app.updateGradeTotal()" 
+                                class="w-full px-2 py-3 bg-slate-800 border border-slate-600 rounded-lg text-center text-sm font-semibold text-white focus:outline-none focus:border-phase-grading focus:ring-2 focus:ring-phase-grading/20 cursor-pointer">
+                                <option value="">-</option>
+                                <option value="BE">BE</option>
+                                <option value="AP">AP</option>
+                                <option value="ME">ME</option>
+                                <option value="MA">MA</option>
+                            </select>
+                        </div>
+                    `).join('');
+                    return;
+                }
+                
+                const isPaper1 = this.paperType === 1;
+                
+                // Set grid columns based on paper type
+                grid.className = isPaper1 ? 'grid grid-cols-4 gap-3' : 'grid grid-cols-5 gap-3';
+                
+                let html = '';
+                
+                // Criterion A (both papers)
+                html += `
+                    <div class="relative">
+                        <label class="text-xs text-slate-400 uppercase tracking-wider mb-2 block text-center">Criterion A</label>
+                        <select id="critA" onchange="app.updateGradeTotal()" 
+                            class="w-full px-2 py-3 bg-slate-800 border border-slate-600 rounded-lg text-center text-lg font-semibold text-white focus:outline-none focus:border-phase-grading focus:ring-2 focus:ring-phase-grading/20 cursor-pointer">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>`;
+                
+                if (isPaper1) {
+                    // Paper 1: Single B
+                    html += `
+                    <div class="relative">
+                        <label class="text-xs text-slate-400 uppercase tracking-wider mb-2 block text-center">Criterion B</label>
+                        <select id="critB" onchange="app.updateGradeTotal()" 
+                            class="w-full px-2 py-3 bg-slate-800 border border-slate-600 rounded-lg text-center text-lg font-semibold text-white focus:outline-none focus:border-phase-grading focus:ring-2 focus:ring-phase-grading/20 cursor-pointer">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>`;
+                } else {
+                    // Paper 2: B1 and B2
+                    html += `
+                    <div class="relative">
+                        <label class="text-xs text-slate-400 uppercase tracking-wider mb-2 block text-center">Criterion B1</label>
+                        <select id="critB1" onchange="app.updateGradeTotal()" 
+                            class="w-full px-2 py-3 bg-slate-800 border border-slate-600 rounded-lg text-center text-lg font-semibold text-white focus:outline-none focus:border-phase-grading focus:ring-2 focus:ring-phase-grading/20 cursor-pointer">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>
+                    <div class="relative">
+                        <label class="text-xs text-slate-400 uppercase tracking-wider mb-2 block text-center">Criterion B2</label>
+                        <select id="critB2" onchange="app.updateGradeTotal()" 
+                            class="w-full px-2 py-3 bg-slate-800 border border-slate-600 rounded-lg text-center text-lg font-semibold text-white focus:outline-none focus:border-phase-grading focus:ring-2 focus:ring-phase-grading/20 cursor-pointer">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>`;
+                }
+                
+                // Criterion C (both papers)
+                html += `
+                    <div class="relative">
+                        <label class="text-xs text-slate-400 uppercase tracking-wider mb-2 block text-center">Criterion C</label>
+                        <select id="critC" onchange="app.updateGradeTotal()" 
+                            class="w-full px-2 py-3 bg-slate-800 border border-slate-600 rounded-lg text-center text-lg font-semibold text-white focus:outline-none focus:border-phase-grading focus:ring-2 focus:ring-phase-grading/20 cursor-pointer">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>`;
+                
+                // Criterion D (both papers)
+                html += `
+                    <div class="relative">
+                        <label class="text-xs text-slate-400 uppercase tracking-wider mb-2 block text-center">Criterion D</label>
+                        <select id="critD" onchange="app.updateGradeTotal()" 
+                            class="w-full px-2 py-3 bg-slate-800 border border-slate-600 rounded-lg text-center text-lg font-semibold text-white focus:outline-none focus:border-phase-grading focus:ring-2 focus:ring-phase-grading/20 cursor-pointer">
+                            <option value="">-</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </div>`;
+                
+                grid.innerHTML = html;
+            }
+            
+            updateGradeTotal() {
+                const totalEl = document.getElementById('gradeTotal');
+                const maxEl = document.getElementById('gradeMax');
+                
+                if (this.paperType === 3) {
+                    // E10 CRA: Letter grades - just check all are selected
+                    const ri101 = document.getElementById('critRI101')?.value || '';
+                    const ri104 = document.getElementById('critRI104')?.value || '';
+                    const w102 = document.getElementById('critW102')?.value || '';
+                    const l101 = document.getElementById('critL101')?.value || '';
+                    
+                    const allSelected = ri101 && ri104 && w102 && l101;
+                    
+                    if (maxEl) maxEl.textContent = 'Letter';
+                    
+                    if (allSelected) {
+                        totalEl.textContent = '✓';
+                        totalEl.style.color = '#10b981';
+                    } else {
+                        totalEl.textContent = '-';
+                        totalEl.style.color = '#64748b';
+                    }
+                    return;
+                }
+                
+                const a = parseInt(document.getElementById('critA')?.value) || 0;
+                const c = parseInt(document.getElementById('critC')?.value) || 0;
+                const d = parseInt(document.getElementById('critD')?.value) || 0;
+                
+                let total = a + c + d;
+                let allSelected = a > 0 && c > 0 && d > 0;
+                let maxScore = this.paperType === 1 ? 20 : 25;
+                
+                if (this.paperType === 1) {
+                    // Paper 1: A, B, C, D (4 criteria)
+                    const b = parseInt(document.getElementById('critB')?.value) || 0;
+                    total += b;
+                    allSelected = allSelected && b > 0;
+                } else {
+                    // Paper 2: A, B1, B2, C, D (5 criteria)
+                    const b1 = parseInt(document.getElementById('critB1')?.value) || 0;
+                    const b2 = parseInt(document.getElementById('critB2')?.value) || 0;
+                    total += b1 + b2;
+                    allSelected = allSelected && b1 > 0 && b2 > 0;
+                }
+                
+                if (maxEl) maxEl.textContent = maxScore;
+                
+                if (allSelected) {
+                    totalEl.textContent = total;
+                    totalEl.style.color = '#10b981';
+                } else {
+                    totalEl.textContent = '-';
+                    totalEl.style.color = '#64748b';
+                }
+            }
+            
+            submitGrade() {
+                let allFilled = true;
+                let grades = {};
+                
+                if (this.paperType === 3) {
+                    // E10 CRA: Letter grades for four criteria
+                    const ri101 = document.getElementById('critRI101').value;
+                    const ri104 = document.getElementById('critRI104').value;
+                    const w102 = document.getElementById('critW102').value;
+                    const l101 = document.getElementById('critL101').value;
+                    
+                    if (!ri101 || !ri104 || !w102 || !l101) {
+                        allFilled = false;
+                    }
+                    
+                    grades = {
+                        ri101: ri101,
+                        ri104: ri104,
+                        w102: w102,
+                        l101: l101,
+                        total: null // No numeric total for letter grades
+                    };
+                } else {
+                    // Paper 1 and 2: Numeric grades
+                    const critA = document.getElementById('critA').value;
+                    const critC = document.getElementById('critC').value;
+                    const critD = document.getElementById('critD').value;
+                    
+                    allFilled = critA && critC && critD;
+                    let total = 0;
+                    
+                    grades = {
+                        criterionA: parseInt(critA),
+                        criterionC: parseInt(critC),
+                        criterionD: parseInt(critD),
+                        total: 0
+                    };
+                    
+                    if (this.paperType === 1) {
+                        const critB = document.getElementById('critB').value;
+                        if (!critB) allFilled = false;
+                        grades.criterionB = parseInt(critB);
+                        total = grades.criterionA + grades.criterionB + grades.criterionC + grades.criterionD;
+                    } else {
+                        const critB1 = document.getElementById('critB1').value;
+                        const critB2 = document.getElementById('critB2').value;
+                        if (!critB1 || !critB2) allFilled = false;
+                        grades.criterionB1 = parseInt(critB1);
+                        grades.criterionB2 = parseInt(critB2);
+                        total = grades.criterionA + grades.criterionB1 + grades.criterionB2 + grades.criterionC + grades.criterionD;
+                    }
+                    
+                    grades.total = total;
+                }
+                
+                if (!allFilled) {
+                    alert('Please score all criteria');
+                    return;
+                }
+                
+                this.currentEssay.grades = grades;
+                this.currentEssay.paperType = this.paperType;
+                this.currentEssay.comment = document.getElementById('essayComment').value.trim();
+                
+                document.getElementById('gradingModal').classList.add('hidden');
+                this.completeEssay();
+            }
+            
+            completeEssay() {
+                if (!this.currentEssay) return;
+                
+                this.soundManager.playComplete();
+                this.showCelebration();
+                
+                const completedEssay = {
+                    ...this.currentEssay,
+                    completedAt: new Date().toISOString(),
+                    totalTime: this.currentEssay.phases.reduce((sum, p) => sum + p.timeSpent, 0)
+                };
+                
+                this.completed.push(completedEssay);
+                this.currentEssay = null;
+                this.currentPhase = null;
+                this.stopTimer();
+                this.stopGradingAnimation();
+                
+                if (this.queue.length > 0) {
+                    this.startBreak();
+                } else {
+                    this.isGrading = false;
+                    this.updateUI();
+                }
+                
+                this.saveToStorage();
+            }
+            
+            startBreak() {
+                this.isBreak = true;
+                this.timeRemaining = this.BREAK_DURATION;
+                this.breakCount++;
+                
+                document.getElementById('breakModal').classList.remove('hidden');
+                
+                this.timerInterval = setInterval(() => {
+                    this.timeRemaining--;
+                    this.updateBreakTimerDisplay();
+                    
+                    if (this.timeRemaining <= 0) {
+                        this.endBreak();
+                    }
+                }, 1000);
+                
+                this.updateUI();
+            }
+            
+            endBreak() {
+                this.stopTimer();
+                this.isBreak = false;
+                document.getElementById('breakModal').classList.add('hidden');
+                this.startNextEssay();
+                this.saveToStorage();
+                this.updateUI();
+            }
+            
+            skipBreak() {
+                this.stopTimer();
+                this.isBreak = false;
+                document.getElementById('breakModal').classList.add('hidden');
+                this.startNextEssay();
+                this.saveToStorage();
+                this.updateUI();
+            }
+            
+            skipEssay() {
+                if (!this.currentEssay) return;
+                
+                this.queue.push(this.currentEssay);
+                this.currentEssay = null;
+                this.currentPhase = null;
+                this.stopTimer();
+                
+                if (this.queue.length > 0) {
+                    this.startNextEssay();
+                } else {
+                    this.isGrading = false;
+                    this.updateUI();
+                }
+                
+                this.saveToStorage();
+                this.updateUI();
+                this.soundManager.playClick();
+            }
+            
+            updateTimerDisplay() {
+                if (!this.currentPhase) return;
+                
+                const mins = Math.floor(this.timeRemaining / 60);
+                const secs = this.timeRemaining % 60;
+                const timerEl = document.getElementById('timer');
+                timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                
+                const phaseConfig = this.PHASES[this.currentPhase];
+                const totalTime = phaseConfig.duration + (this.strikesUsed * this.EXTENSION_MINUTES);
+                const progress = (this.timeRemaining / totalTime) * 100;
+                document.getElementById('phaseProgressBar').style.width = `${progress}%`;
+                document.getElementById('phaseProgressText').textContent = `${Math.round(progress)}%`;
+                
+                this.updatePhaseSegments();
+            }
+            
+            updateBreakTimerDisplay() {
+                const mins = Math.floor(this.timeRemaining / 60);
+                const secs = this.timeRemaining % 60;
+                const timeStr = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                document.getElementById('breakTimer').textContent = timeStr;
+                document.getElementById('breakTimerDisplay').textContent = timeStr;
+            }
+            
+            updatePhaseUI() {
+                if (!this.currentPhase) return;
+                
+                const phaseConfig = this.PHASES[this.currentPhase];
+                const phaseName = phaseConfig.name;
+                
+                const badge = document.getElementById('phaseBadge');
+                badge.textContent = phaseConfig.label;
+                badge.className = `px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-phase-${phaseName}/20 text-phase-${phaseName} border border-phase-${phaseName}/30`;
+                
+                const timer = document.getElementById('timer');
+                timer.className = `text-6xl font-mono font-light tracking-tighter mb-2 timer-${phaseName}`;
+                
+                document.getElementById('phaseProgressBar').className = `h-full bg-phase-${phaseName} transition-all duration-1000`;
+                document.getElementById('nextPhaseBtn').className = 
+                    `btn-satisfying flex-1 px-4 py-2 bg-phase-${phaseName} hover:opacity-90 rounded-lg font-medium text-white transition-colors text-sm`;
+                
+                const currentIdx = this.PHASE_ORDER.indexOf(this.currentPhase);
+                document.getElementById('prevPhaseBtn').disabled = currentIdx === 0;
+                
+                this.updatePhaseSegments();
+                this.updateStrikesUI();
+            }
+            
+            updatePhaseAnimation() {
+                if (!this.currentPhase) return;
+                
+                // Hide all
+                document.getElementById('animReading').classList.add('hidden');
+                document.getElementById('animMarking').classList.add('hidden');
+                document.getElementById('animGrading').classList.add('hidden');
+                
+                // Show current
+                const phaseName = this.PHASES[this.currentPhase].name;
+                document.getElementById(`anim${phaseName.charAt(0).toUpperCase() + phaseName.slice(1)}`).classList.remove('hidden');
+                
+                // Animate checkboxes for grading - continuous checking/unchecking
+                if (phaseName === 'grading') {
+                    this.startGradingAnimation();
+                } else {
+                    this.stopGradingAnimation();
+                }
+            }
+            
+            startGradingAnimation() {
+                // Clear any existing interval
+                this.stopGradingAnimation();
+                
+                const checkboxes = document.querySelectorAll('.checkbox-item');
+                // Start with all unchecked
+                checkboxes.forEach(cb => cb.classList.remove('checked'));
+                
+                let checkIndex = 0;
+                
+                // Animate checkboxes in sequence - check one at a time then reset
+                this.gradingAnimationInterval = setInterval(() => {
+                    // Uncheck all first
+                    checkboxes.forEach(cb => cb.classList.remove('checked'));
+                    
+                    // Check current one
+                    if (checkboxes[checkIndex]) {
+                        checkboxes[checkIndex].classList.add('checked');
+                    }
+                    
+                    checkIndex = (checkIndex + 1) % checkboxes.length;
+                }, 500);
+            }
+            
+            stopGradingAnimation() {
+                if (this.gradingAnimationInterval) {
+                    clearInterval(this.gradingAnimationInterval);
+                    this.gradingAnimationInterval = null;
+                }
+            }
+            
+            showCelebration() {
+                // Create celebration container
+                const container = document.createElement('div');
+                container.className = 'celebration-container';
+                
+                // Add "DONE!" text
+                const text = document.createElement('div');
+                text.className = 'celebration-text';
+                text.textContent = 'DONE!';
+                container.appendChild(text);
+                
+                // Add confetti
+                const colors = ['#10b981', '#06b6d4', '#f59e0b', '#8b5cf6', '#ef4444'];
+                for (let i = 0; i < 30; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + '%';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                    confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                    container.appendChild(confetti);
+                }
+                
+                document.body.appendChild(container);
+                
+                // Remove after animation
+                setTimeout(() => container.remove(), 1500);
+            }
+            
+            updatePhaseSegments() {
+                ['reading', 'marking', 'grading'].forEach(phase => {
+                    const el = document.getElementById(`seg${phase.charAt(0).toUpperCase() + phase.slice(1)}`);
+                    el.style.opacity = '0.2';
+                    el.style.transform = 'scaleY(1)';
+                });
+                
+                if (!this.currentPhase) return;
+                
+                const currentIdx = this.PHASE_ORDER.indexOf(this.currentPhase);
+                for (let i = 0; i <= currentIdx; i++) {
+                    const phaseName = this.PHASES[this.PHASE_ORDER[i]].name;
+                    const el = document.getElementById(`seg${phaseName.charAt(0).toUpperCase() + phaseName.slice(1)}`);
+                    el.style.opacity = i === currentIdx ? '1' : '0.5';
+                    el.style.transform = i === currentIdx ? 'scaleY(1.3)' : 'scaleY(1)';
+                }
+            }
+            
+            updateUI() {
+                // Queue
+                document.getElementById('queueBadge').textContent = this.queue.length;
+                document.getElementById('queueCountDisplay').textContent = this.queue.length;
+                document.getElementById('queueEmpty').style.display = this.queue.length === 0 ? 'flex' : 'none';
+                document.getElementById('paperStack').style.display = (this.queue.length > 0 && !this.showingQueueList) ? 'flex' : 'none';
+                document.getElementById('queueList').classList.toggle('hidden', !this.showingQueueList);
+                document.getElementById('startQueueCount').textContent = `(${this.queue.length} essay${this.queue.length !== 1 ? 's' : ''})`;
+                
+                if (this.showingQueueList) {
+                    this.renderQueueList();
+                } else {
+                    this.renderPaperStack();
+                }
+                
+                // Show/hide start button
+                const hasQueue = this.queue.length > 0;
+                const showStart = hasQueue && !this.isGrading && !this.currentEssay && !this.isBreak;
+                document.getElementById('startSection').classList.toggle('hidden', !showStart);
+                
+                // Update paper type display
+                const paperTypeEl = document.getElementById('currentPaperType');
+                if (paperTypeEl) {
+                    if (this.paperType === 3) {
+                        paperTypeEl.textContent = 'E10 CRA (Letter Grades)';
+                    } else if (this.paperType === 2) {
+                        paperTypeEl.textContent = 'Paper 2 (Max 25)';
+                    } else {
+                        paperTypeEl.textContent = 'Paper 1 (Max 20)';
+                    }
+                }
+                
+                // Done
+                const doneCount = this.completed.length;
+                document.getElementById('doneBadge').textContent = doneCount;
+                document.getElementById('doneEmpty').style.display = doneCount === 0 ? 'flex' : 'none';
+                document.getElementById('doneStack').style.display = (doneCount > 0 && !this.showingDoneList) ? 'flex' : 'none';
+                document.getElementById('doneList').classList.toggle('hidden', !this.showingDoneList);
+                
+                const avgTime = this.calculateAverageTime();
+                document.getElementById('doneStats').textContent = avgTime ? `Avg: ${avgTime}m` : 'Avg: --';
+                
+                this.renderDoneStack();
+                if (this.showingDoneList) this.renderDoneList();
+                
+                // Stats
+                document.getElementById('sessionCount').textContent = this.completed.length;
+                document.getElementById('avgTime').textContent = avgTime || '--';
+                document.getElementById('breakCount').textContent = this.breakCount;
+                
+                // Section visibility
+                const hasActiveEssay = this.currentEssay !== null;
+                const isBreak = this.isBreak;
+                
+                document.getElementById('activeSection').classList.toggle('hidden', !hasActiveEssay);
+                document.getElementById('breakSection').classList.toggle('hidden', !isBreak);
+                document.getElementById('idleSection').classList.toggle('hidden', hasActiveEssay || isBreak || showStart);
+                
+                if (hasActiveEssay) {
+                    document.getElementById('currentEssayName').textContent = this.currentEssay.name;
+                    this.updateTimerDisplay();
+                    this.updateStrikesUI();
+                    this.updatePauseUI();
+                } else if (isBreak) {
+                    this.updateBreakTimerDisplay();
+                }
+            }
+            
+            updatePauseUI() {
+                const btn = document.getElementById('pauseBtn');
+                const overlay = document.getElementById('pauseOverlay');
+                
+                if (!btn || !overlay) return;
+                
+                if (this.isPaused) {
+                    btn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Resume
+                    `;
+                    overlay.classList.remove('hidden');
+                } else {
+                    btn.innerHTML = `
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Pause
+                    `;
+                    overlay.classList.add('hidden');
+                }
+            }
+            
+            renderPaperStack() {
+                const container = document.getElementById('paperStack');
+                container.innerHTML = '';
+                
+                const essays = this.queue.slice(0, 5);
+                if (essays.length === 0) return;
+                
+                essays.forEach((essay, index) => {
+                    const paper = document.createElement('div');
+                    paper.className = 'stack-item paper-sheet w-48 h-60';
+                    paper.style.zIndex = essays.length - index;
+                    
+                    const rotations = [-3, 2, -1, 4, -2];
+                    const yOffsets = [0, -8, -16, -24, -32];
+                    paper.style.transform = `translateY(${yOffsets[index]}px) rotate(${rotations[index]}deg)`;
+                    
+                    const canMoveUp = index > 0;
+                    const canMoveDown = index < this.queue.length - 1;
+                    
+                    paper.innerHTML = `
+                        <div class="paper-lines h-full p-4 flex flex-col">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs text-slate-400 font-medium">#${index + 1}</div>
+                                <div class="flex gap-1">
+                                    <button onclick="app.moveQueueItem(${index}, -1); event.stopPropagation();" 
+                                        class="w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 text-xs transition-colors ${!canMoveUp ? 'opacity-30 cursor-not-allowed' : ''}" 
+                                        ${!canMoveUp ? 'disabled' : ''} title="Move up">↑</button>
+                                    <button onclick="app.moveQueueItem(${index}, 1); event.stopPropagation();" 
+                                        class="w-5 h-5 rounded bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-600 text-xs transition-colors ${!canMoveDown ? 'opacity-30 cursor-not-allowed' : ''}" 
+                                        ${!canMoveDown ? 'disabled' : ''} title="Move down">↓</button>
+                                </div>
+                            </div>
+                            <div class="text-sm font-semibold text-slate-700 leading-tight">${essay.name}</div>
+                            <div class="mt-auto flex items-center justify-between">
+                                <div class="w-8 h-8 rounded-full bg-slate-200"></div>
+                                <div class="text-xs text-slate-400">15 min</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(paper);
+                });
+                
+                if (this.queue.length > 5) {
+                    const more = document.createElement('div');
+                    more.className = 'absolute -bottom-2 right-0 bg-slate-700 text-white text-xs px-2 py-1 rounded-full';
+                    more.textContent = `+${this.queue.length - 5} more`;
+                    container.appendChild(more);
+                }
+            }
+            
+            renderQueueList() {
+                const container = document.getElementById('queueList');
+                container.innerHTML = '';
+                
+                if (this.queue.length === 0) return;
+                
+                this.queue.forEach((essay, index) => {
+                    const canMoveUp = index > 0;
+                    const canMoveDown = index < this.queue.length - 1;
+                    
+                    const item = document.createElement('div');
+                    item.className = 'bg-slate-800 rounded-lg p-3 mb-2 border border-slate-700 flex items-center justify-between';
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-slate-500 font-mono">#${index + 1}</span>
+                            <span class="text-sm font-medium text-slate-200">${essay.name}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <button onclick="app.moveQueueItem(${index}, -1)" 
+                                class="w-7 h-7 rounded bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-300 text-xs transition-colors ${!canMoveUp ? 'opacity-30 cursor-not-allowed' : ''}" 
+                                ${!canMoveUp ? 'disabled' : ''} title="Move up">↑</button>
+                            <button onclick="app.moveQueueItem(${index}, 1)" 
+                                class="w-7 h-7 rounded bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-300 text-xs transition-colors ${!canMoveDown ? 'opacity-30 cursor-not-allowed' : ''}" 
+                                ${!canMoveDown ? 'disabled' : ''} title="Move down">↓</button>
+                            <button onclick="app.removeFromQueue(${index})" 
+                                class="w-7 h-7 rounded bg-red-900/30 hover:bg-red-900/50 flex items-center justify-center text-red-400 text-xs transition-colors ml-1" 
+                                title="Remove">×</button>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+            
+            removeFromQueue(index) {
+                if (!confirm('Remove this essay from the queue?')) return;
+                this.queue.splice(index, 1);
+                this.saveToStorage();
+                this.updateUI();
+                this.soundManager.playClick();
+            }
+            
+            moveQueueItem(index, direction) {
+                const newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= this.queue.length) return;
+                
+                // Swap items
+                const temp = this.queue[index];
+                this.queue[index] = this.queue[newIndex];
+                this.queue[newIndex] = temp;
+                
+                this.saveToStorage();
+                this.updateUI();
+                this.soundManager.playClick();
+            }
+            
+            renderDoneStack() {
+                const container = document.getElementById('doneStack');
+                if (this.completed.length === 0) return;
+                
+                container.innerHTML = '';
+                
+                const count = Math.min(this.completed.length, 5);
+                const essays = this.completed.slice(-count);
+                
+                essays.forEach((essay, index) => {
+                    const paper = document.createElement('div');
+                    paper.className = 'stack-item paper-sheet w-48 h-60';
+                    paper.style.zIndex = essays.length - index;
+                    
+                    const rotations = [2, -3, 1, -2, 3];
+                    const yOffsets = [0, -8, -16, -24, -32];
+                    paper.style.transform = `translateY(${yOffsets[index]}px) rotate(${rotations[index]}deg)`;
+                    paper.style.background = 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)';
+                    
+                    const timeMin = Math.round(essay.totalTime / 60 * 10) / 10;
+                    
+                    paper.innerHTML = `
+                        <div class="h-full p-4 flex flex-col" style="background-image: repeating-linear-gradient(transparent, transparent 18px, #6ee7b7 18px, #6ee7b7 19px); background-position: 0 30px;">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="text-xs text-emerald-600 font-medium">✓ Done</div>
+                                <div class="text-xs text-emerald-600">${timeMin}m</div>
+                            </div>
+                            <div class="text-sm font-semibold text-emerald-800 leading-tight">${essay.name}</div>
+                            <div class="mt-auto flex justify-center">
+                                <div class="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center text-white text-lg font-bold">${index + 1}</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(paper);
+                });
+                
+                const totalBadge = document.createElement('div');
+                totalBadge.className = 'absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-phase-grading text-white px-4 py-2 rounded-full font-bold shadow-lg';
+                totalBadge.textContent = `${this.completed.length} completed`;
+                container.appendChild(totalBadge);
+            }
+            
+            renderDoneList() {
+                const container = document.getElementById('doneList');
+                container.innerHTML = '';
+                
+                [...this.completed].reverse().forEach(essay => {
+                    const timeMin = Math.round(essay.totalTime / 60 * 10) / 10;
+                    const grades = essay.grades || {};
+                    const essayPaperType = essay.paperType || 1;
+                    const maxScore = essayPaperType === 1 ? 20 : 25;
+                    const phases = essay.phases.map(p => {
+                        const phaseName = this.PHASES[p.phase].name;
+                        return `<span class="text-xs bg-phase-${phaseName}/20 text-phase-${phaseName} px-1.5 py-0.5 rounded">${Math.round(p.timeSpent/60)}m</span>`;
+                    }).join(' ');
+                    
+                    // Build criteria display based on paper type
+                    let criteriaDisplay, scoreDisplay, paperLabel;
+                    
+                    if (essayPaperType === 3) {
+                        // E10 CRA
+                        criteriaDisplay = `
+                            <span>RI101:${grades.ri101 || '-'}</span>
+                            <span>RI104:${grades.ri104 || '-'}</span>
+                            <span>W102:${grades.w102 || '-'}</span>
+                            <span>L101:${grades.l101 || '-'}</span>
+                        `;
+                        const letters = [grades.ri101, grades.ri104, grades.w102, grades.l101].filter(g => g).join(',');
+                        scoreDisplay = letters || '-';
+                        paperLabel = 'E10 CRA';
+                    } else if (essayPaperType === 1) {
+                        criteriaDisplay = `
+                            <span>A:${grades.criterionA || '-'}</span>
+                            <span>B:${grades.criterionB || '-'}</span>
+                            <span>C:${grades.criterionC || '-'}</span>
+                            <span>D:${grades.criterionD || '-'}</span>
+                        `;
+                        scoreDisplay = `${grades.total || '-'}/${maxScore}`;
+                        paperLabel = 'Paper 1';
+                    } else {
+                        criteriaDisplay = `
+                            <span>A:${grades.criterionA || '-'}</span>
+                            <span>B1:${grades.criterionB1 || '-'}</span>
+                            <span>B2:${grades.criterionB2 || '-'}</span>
+                            <span>C:${grades.criterionC || '-'}</span>
+                            <span>D:${grades.criterionD || '-'}</span>
+                        `;
+                        scoreDisplay = `${grades.total || '-'}/${maxScore}`;
+                        paperLabel = 'Paper 2';
+                    }
+                    
+                    const commentHtml = essay.comment ? `
+                        <div class="mt-2 text-xs text-emerald-300/50 italic border-t border-emerald-500/20 pt-2">
+                            "${essay.comment}"
+                        </div>
+                    ` : '';
+                    
+                    const item = document.createElement('div');
+                    item.className = 'bg-emerald-50/10 rounded-lg p-3 mb-2 border border-emerald-500/30';
+                    item.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="text-sm font-medium text-emerald-200 truncate flex-1">${essay.name}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-emerald-500/70">${paperLabel}</span>
+                                <span class="text-xs text-emerald-400 font-bold">${scoreDisplay}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-xs text-emerald-300/70 mb-2">
+                            <div class="flex gap-2">${criteriaDisplay}</div>
+                            ${essayPaperType !== 3 ? `<span class="font-semibold text-emerald-400">=${grades.total || '-'}</span>` : ''}
+                        </div>
+                        <div class="flex gap-1 flex-wrap">${phases}</div>
+                        ${commentHtml}
+                    `;
+                    container.appendChild(item);
+                });
+            }
+            
+            toggleDoneView() {
+                this.showingDoneList = !this.showingDoneList;
+                document.getElementById('doneToggleText').textContent = 
+                    this.showingDoneList ? 'Show pile view' : 'View all completed';
+                this.updateUI();
+            }
+            
+            toggleQueueView() {
+                this.showingQueueList = !this.showingQueueList;
+                document.getElementById('queueToggleText').textContent = 
+                    this.showingQueueList ? 'Stack view' : 'List view';
+                this.updateUI();
+            }
+            
+            calculateAverageTime() {
+                if (this.completed.length === 0) return null;
+                const totalSeconds = this.completed.reduce((sum, e) => sum + e.totalTime, 0);
+                return Math.round(totalSeconds / this.completed.length / 60 * 10) / 10;
+            }
+            
+            toggleSound() {
+                this.soundManager.toggle();
+                this.updateSoundIcon();
+            }
+            
+            updateSoundIcon() {
+                const enabled = this.soundManager.enabled;
+                document.getElementById('soundOn').classList.toggle('hidden', !enabled);
+                document.getElementById('soundOff').classList.toggle('hidden', enabled);
+            }
+            
+            exportCSV() {
+                if (this.completed.length === 0) {
+                    alert('No completed essays to export.');
+                    return;
+                }
+                
+                // Determine paper type usage
+                const hasPaper1 = this.completed.some(e => !e.paperType || e.paperType === 1);
+                const hasPaper2 = this.completed.some(e => e.paperType === 2);
+                const hasE10CRA = this.completed.some(e => e.paperType === 3);
+                
+                // Build CSV with visual separation and emphasis on final score
+                let csv = '';
+                
+                // Title row
+                csv += '"IB GRADING TRACKER - EXPORT REPORT"\n';
+                csv += `"Generated: ${new Date().toLocaleString()}"\n`;
+                csv += `"Total Essays: ${this.completed.length}"\n`;
+                
+                const types = [];
+                if (hasPaper1) types.push('Paper 1');
+                if (hasPaper2) types.push('Paper 2');
+                if (hasE10CRA) types.push('E10 CRA');
+                
+                if (types.length > 1) {
+                    csv += `"Note: Mixed Paper Types (${types.join(', ')})"\n`;
+                } else if (hasE10CRA) {
+                    csv += `"Paper Type: E10 CRA (RI 10.1, RI 10.4, W 10.2, L.10.1)"\n`;
+                } else if (hasPaper2) {
+                    csv += `"Paper Type: Paper 2 (A, B1, B2, C, D - Max 25)"\n`;
+                } else {
+                    csv += `"Paper Type: Paper 1 (A, B, C, D - Max 20)"\n`;
+                }
+                csv += '\n';
+                
+                // Build universal headers that work for all paper types
+                const headers = [
+                    '"STUDENT NAME"',
+                    '"PAPER"',
+                    '"FINAL SCORE"',
+                    '"CRIT A"',
+                    '"CRIT B / B1"',
+                    '"CRIT B2 / RI 10.4"',
+                    '"CRIT C / W 10.2"',
+                    '"CRIT D / L.10.1 / RI 10.1"',
+                    '"READ (min)"',
+                    '"MARK (min)"',
+                    '"GRADE (min)"',
+                    '"TOTAL (min)"',
+                    '"EXTENDS"',
+                    '"COMMENTS"',
+                    '"STARTED"',
+                    '"COMPLETED"'
+                ];
+                
+                // Header separator row (visual distinction)
+                const separators = headers.map(() => '"----------"');
+                
+                csv += headers.join(',') + '\n';
+                csv += separators.join(',') + '\n';
+                
+                const rows = this.completed.map(e => {
+                    const reading = e.phases.find(p => p.phase === 'READING')?.timeSpent || 0;
+                    const marking = e.phases.find(p => p.phase === 'MARKING')?.timeSpent || 0;
+                    const grading = e.phases.find(p => p.phase === 'GRADING')?.timeSpent || 0;
+                    const strikesUsed = e.strikesUsed || Math.round((e.totalTime - (this.PHASES.READING.duration + this.PHASES.MARKING.duration + this.PHASES.GRADING.duration)) / this.EXTENSION_MINUTES);
+                    
+                    const essayPaperType = e.paperType || 1;
+                    const grades = e.grades || {};
+                    
+                    let finalScoreDisplay;
+                    if (essayPaperType === 3) {
+                        // E10 CRA: show all four letter grades as score
+                        const letters = [grades.ri101, grades.ri104, grades.w102, grades.l101].filter(g => g).join(', ');
+                        finalScoreDisplay = letters ? `"${letters}"` : '"-"';
+                    } else {
+                        const maxScore = essayPaperType === 1 ? 20 : 25;
+                        const finalScore = grades.total || 0;
+                        finalScoreDisplay = finalScore ? `"*** ${finalScore} / ${maxScore} ***"` : '"-"';
+                    }
+                    
+                    // Universal columns that work for all paper types
+                    let colA, colB, colB2, colC, colD;
+                    
+                    if (essayPaperType === 3) {
+                        // E10 CRA
+                        colA = '-'; // No A
+                        colB = '-'; // No B
+                        colB2 = grades.ri104 || '-'; // RI 10.4 in B2 column
+                        colC = grades.w102 || '-';   // W 10.2 in C column
+                        colD = grades.l101 || '-';   // L.10.1 in D column
+                        // RI 10.1 will be placed in extra column
+                    } else if (essayPaperType === 1) {
+                        // Paper 1
+                        colA = grades.criterionA || '-';
+                        colB = grades.criterionB || '-';
+                        colB2 = '-'; // No B2
+                        colC = grades.criterionC || '-';
+                        colD = grades.criterionD || '-';
+                    } else {
+                        // Paper 2
+                        colA = grades.criterionA || '-';
+                        colB = grades.criterionB1 || '-';
+                        colB2 = grades.criterionB2 || '-';
+                        colC = grades.criterionC || '-';
+                        colD = grades.criterionD || '-';
+                    }
+                    
+                    // Extra column for E10 CRA's RI 10.1
+                    const colExtra = (essayPaperType === 3) ? (grades.ri101 || '-') : colD;
+                    
+                    return [
+                        `"${e.name}"`,
+                        `"${essayPaperType === 3 ? 'E10 CRA' : 'Paper ' + essayPaperType}"`,
+                        finalScoreDisplay,
+                        `"${colA}"`,
+                        `"${colB}"`,
+                        `"${colB2}"`,
+                        `"${colC}"`,
+                        `"${colExtra}"`,
+                        `"${(reading / 60).toFixed(1)}"`,
+                        `"${(marking / 60).toFixed(1)}"`,
+                        `"${(grading / 60).toFixed(1)}"`,
+                        `"${(e.totalTime / 60).toFixed(1)}"`,
+                        `"${strikesUsed}"`,
+                        `"${(e.comment || '').replace(/"/g, '""')}"`,
+                        `"${new Date(e.startedAt).toLocaleString()}"`,
+                        `"${new Date(e.completedAt).toLocaleString()}"`
+                    ];
+                });
+                
+                csv += rows.join('\n') + '\n\n';
+                
+                // Summary statistics at the bottom
+                const numericEssays = this.completed.filter(e => e.paperType !== 3);
+                const totals = this.completed.reduce((acc, e) => {
+                    if (e.paperType !== 3) acc.score += e.grades?.total || 0;
+                    acc.time += e.totalTime;
+                    acc.extends += e.strikesUsed || 0;
+                    return acc;
+                }, { score: 0, time: 0, extends: 0 });
+                
+                const avgTime = (totals.time / this.completed.length / 60).toFixed(1);
+                
+                csv += '"---------- SUMMARY STATISTICS ----------"\n';
+                
+                if (numericEssays.length > 0) {
+                    const avgScore = (totals.score / numericEssays.length).toFixed(1);
+                    csv += `"Average Score (numeric papers)","${avgScore} points"\n`;
+                }
+                
+                csv += `"Average Time","${avgTime} minutes"\n`;
+                csv += `"Total Extensions Used","${totals.extends}"\n`;
+                csv += `"Total Essays Graded","${this.completed.length}"\n`;
+                if (hasE10CRA) {
+                    const e10Count = this.completed.filter(e => e.paperType === 3).length;
+                    csv += `"  - E10 CRA (letter grades)","${e10Count}"\n`;
+                }
+                
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `ib-grading-tracker-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            
+            clearAll() {
+                if (!confirm('Clear all data? This cannot be undone.')) return;
+                
+                this.queue = [];
+                this.completed = [];
+                this.currentEssay = null;
+                this.currentPhase = null;
+                this.isBreak = false;
+                this.isGrading = false;
+                this.breakCount = 0;
+                this.strikesUsed = 0;
+                this.paperType = 1; // Reset to default Paper 1
+                localStorage.setItem('paperType', 1);
+                this.stopTimer();
+                this.saveToStorage();
+                this.updateUI();
+            }
+        }
+
+        const app = new GradingWorkflow();
+    </script>
+</body>
+</html>
