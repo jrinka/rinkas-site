@@ -4,288 +4,126 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>rinkas.com</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #111110;
-      --bg-card: #1a1917;
-      --text: #e2d9c8;
-      --text-muted: #7a7265;
-      --text-dim: #4a453e;
-      --accent: #b8895a;
-      --accent-light: #d4a97a;
-      --border: rgba(255,255,255,0.06);
-    }
-
-    html { font-size: 16px; }
-
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 300;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    header {
-      padding: 3rem 2rem 0;
-      max-width: 900px;
+      background: #c0c0c0;
+      color: #000;
+      font-family: "Times New Roman", Times, serif;
+      max-width: 640px;
       margin: 0 auto;
-      width: 100%;
-      opacity: 0;
-      animation: rise 0.9s ease forwards;
+      padding: 24px 16px;
     }
 
-    .site-name {
-      font-family: 'Cormorant Garamond', serif;
-      font-weight: 300;
-      font-size: clamp(2.8rem, 8vw, 5.5rem);
-      letter-spacing: -0.02em;
-      line-height: 1;
-      color: var(--text);
+    h1 {
+      font-size: 2.2rem;
+      color: #000080;
+      margin-bottom: 16px;
     }
 
-    .site-name em {
-      font-style: italic;
-      color: var(--accent-light);
-    }
-
-    .tagline {
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      font-weight: 400;
-    }
-
-    nav {
-      margin-top: 1.5rem;
-      display: flex;
-      gap: 1.5rem;
-      opacity: 0;
-      animation: rise 0.9s ease 0.15s forwards;
-    }
-
-    nav a {
-      font-size: 0.8rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-weight: 400;
-      transition: color 0.2s;
-    }
-
-    nav a:hover { color: var(--accent-light); }
-
-    .divider {
-      max-width: 900px;
-      margin: 2.5rem auto 0;
-      width: 100%;
-      padding: 0 2rem;
-      opacity: 0;
-      animation: rise 0.9s ease 0.25s forwards;
-    }
-
-    .divider hr {
+    hr {
       border: none;
-      border-top: 1px solid var(--border);
+      border-top: 2px solid #808080;
+      border-bottom: 1px solid #fff;
+      margin: 16px 0;
     }
 
-    main {
-      max-width: 900px;
-      margin: 3rem auto 0;
-      width: 100%;
-      padding: 0 2rem;
-      flex: 1;
-    }
-
-    .sections {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-    }
-
-    .section-card {
-      background: var(--bg);
-      padding: 2.5rem 2rem;
-      text-decoration: none;
-      display: block;
-      position: relative;
-      overflow: hidden;
-      transition: background 0.3s;
-      opacity: 0;
-    }
-
-    .section-card:nth-child(1) { animation: rise 0.9s ease 0.3s forwards; }
-    .section-card:nth-child(2) { animation: rise 0.9s ease 0.42s forwards; }
-    .section-card:nth-child(3) { animation: rise 0.9s ease 0.54s forwards; }
-
-    .section-card::before {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--accent);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.35s ease;
-    }
-
-    .section-card:hover { background: var(--bg-card); }
-    .section-card:hover::before { transform: scaleX(1); }
-
-    .card-number {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      font-weight: 400;
-      letter-spacing: 0.05em;
-      margin-bottom: 1.5rem;
-    }
-
-    .card-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 2rem;
-      font-weight: 300;
-      line-height: 1.15;
-      color: var(--text);
-      margin-bottom: 0.75rem;
-      letter-spacing: -0.01em;
-    }
-
-    .card-desc {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      line-height: 1.7;
-      font-weight: 300;
-    }
-
-    .card-arrow {
-      margin-top: 2rem;
-      font-size: 0.75rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent);
-      font-weight: 400;
-      opacity: 0;
-      transition: opacity 0.25s;
-    }
-
-    .section-card:hover .card-arrow { opacity: 1; }
-
-    .intro {
-      margin-bottom: 3rem;
-      opacity: 0;
-      animation: rise 0.9s ease 0.2s forwards;
-    }
-
-    .intro p {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(1.1rem, 2.5vw, 1.35rem);
-      font-weight: 300;
-      font-style: italic;
-      color: var(--text-muted);
-      line-height: 1.75;
-      max-width: 580px;
-    }
-
-    footer {
-      max-width: 900px;
-      margin: 4rem auto;
-      width: 100%;
-      padding: 0 2rem;
-      display: flex;
-      justify-content: space-between;
+    .under-construction {
+      background: #ffff00;
+      border: 2px solid #000;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      display: inline-flex;
       align-items: center;
-      opacity: 0;
-      animation: rise 0.9s ease 0.7s forwards;
+      gap: 8px;
     }
 
-    footer p {
-      font-size: 0.75rem;
-      color: var(--text-dim);
-      letter-spacing: 0.05em;
+    .uc-icon {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      background: repeating-linear-gradient(
+        45deg,
+        #000 0px, #000 4px,
+        #ffcc00 4px, #ffcc00 8px
+      );
+      flex-shrink: 0;
     }
 
-    footer a {
-      color: var(--text-dim);
-      text-decoration: none;
-      transition: color 0.2s;
+    h2 {
+      font-size: 1.2rem;
+      color: #800000;
+      margin-bottom: 6px;
+      margin-top: 20px;
     }
 
-    footer a:hover { color: var(--accent-light); }
-
-    @keyframes rise {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
+    ul {
+      margin: 0 0 12px 20px;
+      padding: 0;
     }
 
-    @media (max-width: 600px) {
-      .sections { grid-template-columns: 1fr; }
-      footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+    li { margin-bottom: 4px; }
+
+    a { color: #0000ee; }
+    a:visited { color: #551a8b; }
+    a:hover { color: #ff0000; }
+
+    .counter {
+      margin-top: 24px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+
+    .counter-digits {
+      font-family: "Courier New", monospace;
+      background: #000;
+      color: #00ff41;
+      padding: 2px 6px;
+      letter-spacing: 0.15em;
+      font-size: 0.9rem;
+      border: 1px inset #444;
+    }
+
+    address {
+      font-style: normal;
+      font-size: 0.8rem;
+      color: #444;
+      margin-top: 8px;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1 class="site-name">rin<em>kas</em></h1>
-    <p class="tagline">Beijing &nbsp;·&nbsp; Teacher &nbsp;·&nbsp; Reader &nbsp;·&nbsp; Sandbox</p>
-  </header>
+  <h1>rinkas.com</h1>
 
-  <nav>
-    <a href="/interests">Interests</a>
-    <a href="/teaching">Teaching</a>
-    <a href="/writing">Writing</a>
-  </nav>
+  <hr />
 
-  <div class="divider"><hr /></div>
+  <div class="under-construction">
+    <span class="uc-icon"></span>
+    under construction as I figure this out
+    <span class="uc-icon"></span>
+  </div>
 
-  <main>
-    <div class="intro">
-      <p>A personal site for things I'm reading, watching, listening to, and building. Works in progress, classroom tools, occasional writing.</p>
-    </div>
+  <h2>Interests</h2>
+  <ul>
+    <li><a href="/interests.html">Interests</a></li>
+  </ul>
 
-    <div class="sections">
-      <a class="section-card" href="/interests">
-        <p class="card-number">01</p>
-        <h2 class="card-title">Interests</h2>
-        <p class="card-desc">Books, films, music, games, art. Curated lists and occasional notes on what's worth paying attention to.</p>
-        <p class="card-arrow">Explore &rarr;</p>
-      </a>
+  <h2>Toys</h2>
+  <ul>
+    <li><a href="#">Toys</a></li>
+  </ul>
 
-      <a class="section-card" href="/teaching">
-        <p class="card-number">02</p>
-        <h2 class="card-title">Teaching</h2>
-        <p class="card-desc">Classroom tools, bellringers, timers, projectable games, and lit resources. Built for IB Literature and English 9–10.</p>
-        <p class="card-arrow">Explore &rarr;</p>
-      </a>
+  <hr />
 
-      <a class="section-card" href="/writing">
-        <p class="card-number">03</p>
-        <h2 class="card-title">Writing</h2>
-        <p class="card-desc">Longer thoughts when a paragraph isn't enough. Mostly about books, music, and whatever I can't stop thinking about.</p>
-        <p class="card-arrow">Explore &rarr;</p>
-      </a>
-    </div>
-  </main>
+  <address>Last updated: April 2026</address>
 
-  <footer>
-    <p>rinkas.com</p>
-    <p>Beijing, China</p>
-  </footer>
+  <div class="counter">
+    <span>&#128100; Visitors:</span>
+    <span class="counter-digits">0000247</span>
+  </div>
 
 </body>
 </html>
