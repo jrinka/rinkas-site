@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RINKA - Toys</title>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #c0c0c0;
+      font-family: "Times New Roman", Times, serif;
+      color: #000;
+      margin: 0;
+      padding: 12px;
+    }
+
+    .window {
+      max-width: 660px;
+      margin: 0 auto;
+      border: 2px solid;
+      border-color: #ffffff #808080 #808080 #ffffff;
+      background: #c0c0c0;
+    }
+
+    .title-bar {
+      background: #000080;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      font-size: 0.8em;
+      font-weight: bold;
+      padding: 3px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title-bar-btns { display: flex; gap: 2px; }
+
+    .tb-btn {
+      width: 16px; height: 14px;
+      background: #c0c0c0;
+      border: 1px solid;
+      border-color: #fff #808080 #808080 #fff;
+      font-size: 0.65em; color: #000;
+      text-align: center; line-height: 14px;
+      cursor: default; font-family: Arial, sans-serif;
+    }
+
+    .win-body { padding: 10px 12px 14px; }
+
+    .page-title {
+      font-family: 'VT323', monospace;
+      font-size: 72px;
+      color: #ffff00;
+      text-shadow: 3px 3px 0 #cc3300, 5px 5px 0 #881100;
+      margin: 0;
+      line-height: 1;
+    }
+
+    .rainbow-hr {
+      height: 4px;
+      background: linear-gradient(to right,
+        #ff0000 0%, #ff0000 14%, #ff8800 14%, #ff8800 28%,
+        #ffff00 28%, #ffff00 42%, #00cc00 42%, #00cc00 57%,
+        #0000ff 57%, #0000ff 71%, #8800cc 71%, #8800cc 85%,
+        #ff00ff 85%, #ff00ff 100%);
+      border: none; margin: 8px 0;
+    }
+
+    .nav-row {
+      display: flex; gap: 4px; margin: 6px 0; align-items: center;
+    }
+
+    .nav-btn {
+      display: inline-block; padding: 3px 14px;
+      background: #c0c0c0; color: #000; text-decoration: none;
+      font-family: Arial, sans-serif; font-size: 0.82em; font-weight: bold;
+      border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff;
+    }
+
+    .nav-btn:hover { border-color: #808080 #ffffff #ffffff #808080; }
+    .nav-btn.active { border-color: #808080 #ffffff #ffffff #808080; background: #d4d0c8; }
+
+    .content-area {
+      border: 2px solid;
+      border-color: #808080 #ffffff #ffffff #808080;
+      background: #ffffff;
+      padding: 16px;
+      margin-top: 8px;
+      min-height: 220px;
+    }
+
+    .content-area h2 {
+      font-family: Arial, sans-serif; font-size: 0.9em;
+      font-weight: bold; text-transform: uppercase;
+      color: #000080; border-bottom: 1px solid #ccc;
+      padding-bottom: 4px; margin: 0 0 10px 0;
+    }
+
+    .under-construction {
+      text-align: center; padding: 30px 0;
+    }
+
+    .construction-text {
+      font-family: Arial, sans-serif; font-size: 0.85em;
+      font-weight: bold; color: #cc0000;
+      animation: blink 1.1s step-start infinite;
+    }
+
+    @keyframes blink { 50% { visibility: hidden; } }
+
+    .footer-row {
+      text-align: right; font-family: Arial, sans-serif;
+      font-size: 0.72em; color: #555; margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="window">
+  <div class="title-bar">
+    <span>&#9632; RINKA.COM — Toys — Netscape Navigator</span>
+    <div class="title-bar-btns">
+      <div class="tb-btn">_</div>
+      <div class="tb-btn">&#9633;</div>
+      <div class="tb-btn">&#x2715;</div>
+    </div>
+  </div>
+
+  <div class="win-body">
+
+    <h1 class="page-title">&#127918; TOYS</h1>
+
+    <div class="rainbow-hr"></div>
+
+    <div class="nav-row">
+      <a href="index.html" class="nav-btn">&#8962; HOME</a>
+      <a href="typing.html" class="nav-btn">&#9998; TYPING</a>
+      <a href="teaching.html" class="nav-btn">&#127822; TEACHING</a>
+      <a href="toys.html" class="nav-btn active">&#127918; TOYS</a>
+    </div>
+
+    <div class="content-area">
+      <h2>&#128736; Projects &amp; Experiments</h2>
+      <div class="under-construction">
+        <div style="font-size:3em;">&#127918;</div>
+        <p class="construction-text">&#128736; NOTHING HERE YET &#128736;</p>
+        <p style="font-family:Arial,sans-serif; font-size:0.8em; color:#666; margin-top:8px;">
+          Random builds, experiments, and dumb ideas.
+        </p>
+      </div>
+    </div>
+
+    <div class="footer-row">
+      <a href="index.html" style="color:#0000cc;">&#8617; back to home</a>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
